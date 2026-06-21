@@ -11,7 +11,9 @@ import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ItemUtils;
 import com.extendedclip.deluxemenus.utils.StringUtils;
 import com.extendedclip.deluxemenus.utils.VersionHelper;
+import github.saukiya.sxitem.SXItem;
 import com.google.common.collect.ImmutableMultimap;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -25,6 +27,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.BlockDataMeta;
@@ -47,6 +50,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
@@ -122,6 +126,72 @@ public class MenuItem {
 
             itemStack = playerItem.clone();
             amount = playerItem.getAmount();
+        }
+
+        if (this.options.playerItem().isPresent()) {
+            // First pass: resolve placeholders and DM arguments ({}, %%)
+            String playerItemConfig = holder.setPlaceholdersAndArguments(this.options.playerItem().get());
+            // Second pass: in case the resolved value itself contains placeholders
+            playerItemConfig = holder.setPlaceholdersAndArguments(playerItemConfig);
+            final String[] parts = playerItemConfig.split(":", 2);
+            if (parts.length == 2) {
+                final String targetPlayerName = parts[0];
+                final Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
+                if (targetPlayer != null && targetPlayer.isOnline()) {
+                    // Try numeric slot first
+                    try {
+                        final int slot = Integer.parseInt(parts[1]);
+                        final ItemStack[] contents = targetPlayer.getInventory().getContents();
+                        if (slot >= 0 && slot < contents.length) {
+                            final ItemStack targetItem = contents[slot];
+                            if (targetItem != null && targetItem.getType() != Material.AIR) {
+                                itemStack = targetItem.clone();
+                                amount = itemStack.getAmount();
+                                lowercaseStringMaterial = itemStack.getType().toString().toLowerCase(Locale.ENGLISH);
+                            }
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Not a number — try named inventory accessor (hand, off_hand, armor_helmet, etc.)
+                        final Function<PlayerInventory, ItemStack> accessor = INVENTORY_ITEM_ACCESSORS.get(parts[1].toLowerCase(Locale.ENGLISH));
+                        if (accessor != null) {
+                            final ItemStack targetItem = accessor.apply(targetPlayer.getInventory());
+                            if (targetItem != null && targetItem.getType() != Material.AIR) {
+                                itemStack = targetItem.clone();
+                                amount = itemStack.getAmount();
+                                lowercaseStringMaterial = itemStack.getType().toString().toLowerCase(Locale.ENGLISH);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (this.options.siItem().isPresent()) {
+            final String siItemKey = holder.setPlaceholdersAndArguments(this.options.siItem().get());
+            // Try to get from cache first (pre-loaded on main thread in Menu.openMenu)
+            ItemStack siItemStack = holder.getSiItemFromCache(siItemKey);
+            if (siItemStack != null) {
+                itemStack = siItemStack.clone();
+                amount = itemStack.getAmount();
+                lowercaseStringMaterial = itemStack.getType().toString().toLowerCase(Locale.ENGLISH);
+            } else {
+                // Fallback: try direct call (works if getItemStack is called on main thread, e.g. refresh)
+                try {
+                    if (SXItem.getItemManager() != null) {
+                        siItemStack = SXItem.getItemManager().getItem(siItemKey, viewer);
+                        if (siItemStack != null && siItemStack.getType() != Material.AIR) {
+                            itemStack = siItemStack.clone();
+                            amount = itemStack.getAmount();
+                            lowercaseStringMaterial = itemStack.getType().toString().toLowerCase(Locale.ENGLISH);
+                        }
+                    }
+                } catch (final NoClassDefFoundError ignored) {
+                    // SX-Item plugin is not loaded on this server
+                } catch (final IllegalStateException ignored) {
+                    // SX-Item getItem() fires Bukkit events and cannot be called asynchronously;
+                    // item will fall through to use the configured material
+                }
+            }
         }
 
         final int temporaryAmount = amount;
@@ -489,7 +559,7 @@ public class MenuItem {
             if (this.options.nbtByte().isPresent()) {
                 final String tag = holder.setPlaceholdersAndArguments(this.options.nbtByte().get());
                 if (tag.contains(":")) {
-                    final String[] parts = tag.split(":");
+                    final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setByte(itemStack, parts[0], Byte.parseByte(parts[1]));
                 }
             }
@@ -497,7 +567,7 @@ public class MenuItem {
             if (this.options.nbtShort().isPresent()) {
                 final String tag = holder.setPlaceholdersAndArguments(this.options.nbtShort().get());
                 if (tag.contains(":")) {
-                    final String[] parts = tag.split(":");
+                    final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setShort(itemStack, parts[0], Short.parseShort(parts[1]));
                 }
             }
@@ -505,7 +575,7 @@ public class MenuItem {
             if (this.options.nbtInt().isPresent()) {
                 final String tag = holder.setPlaceholdersAndArguments(this.options.nbtInt().get());
                 if (tag.contains(":")) {
-                    final String[] parts = tag.split(":");
+                    final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setInt(itemStack, parts[0], Integer.parseInt(parts[1]));
                 }
             }
@@ -521,7 +591,7 @@ public class MenuItem {
             for (String nbtTag : this.options.nbtBytes()) {
                 final String tag = holder.setPlaceholdersAndArguments(nbtTag);
                 if (tag.contains(":")) {
-                    final String[] parts = tag.split(":");
+                    final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setByte(itemStack, parts[0], Byte.parseByte(parts[1]));
                 }
             }
@@ -529,7 +599,7 @@ public class MenuItem {
             for (String nbtTag : this.options.nbtShorts()) {
                 final String tag = holder.setPlaceholdersAndArguments(nbtTag);
                 if (tag.contains(":")) {
-                    final String[] parts = tag.split(":");
+                    final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setShort(itemStack, parts[0], Short.parseShort(parts[1]));
                 }
             }
@@ -537,7 +607,7 @@ public class MenuItem {
             for (String nbtTag : this.options.nbtInts()) {
                 final String tag = holder.setPlaceholdersAndArguments(nbtTag);
                 if (tag.contains(":")) {
-                    final String[] parts = tag.split(":");
+                    final String[] parts = tag.split(":", 2);
                     itemStack = NbtProvider.setInt(itemStack, parts[0], Integer.parseInt(parts[1]));
                 }
             }

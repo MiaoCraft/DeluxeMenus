@@ -5,7 +5,9 @@ import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.scheduler.scheduling.schedulers.TaskScheduler;
 import com.extendedclip.deluxemenus.scheduler.scheduling.tasks.MyScheduledTask;
 import com.extendedclip.deluxemenus.utils.StringUtils;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -24,6 +26,8 @@ public class MenuHolder implements InventoryHolder {
     private final Player viewer;
 
     private Player placeholderPlayer;
+    private OfflinePlayer placeholderOfflinePlayer;
+    private Map<String, ItemStack> siItemCache;
     private String menuName;
     private Set<MenuItem> activeItems;
     private MyScheduledTask updateTask = null;
@@ -103,12 +107,16 @@ public class MenuHolder implements InventoryHolder {
     }
 
     public @NotNull String setPlaceholders(final @NotNull String string) {
-        final Player player = this.placeholderPlayer != null ? this.placeholderPlayer : this.viewer;
-        if (player == null) {
-            return string;
+        if (this.placeholderPlayer != null) {
+            return StringUtils.replacePlaceholders(string, this.placeholderPlayer);
         }
-
-        return StringUtils.replacePlaceholders(string, player);
+        if (this.placeholderOfflinePlayer != null) {
+            return StringUtils.replacePlaceholders(string, this.placeholderOfflinePlayer);
+        }
+        if (this.viewer != null) {
+            return StringUtils.replacePlaceholders(string, this.viewer);
+        }
+        return string;
     }
 
     public @NotNull String setArguments(final @NotNull String string) {
@@ -378,6 +386,23 @@ public class MenuHolder implements InventoryHolder {
 
     public Player getPlaceholderPlayer() {
         return placeholderPlayer;
+    }
+
+    public void setPlaceholderOfflinePlayer(@NotNull OfflinePlayer placeholderOfflinePlayer) {
+        this.placeholderOfflinePlayer = placeholderOfflinePlayer;
+    }
+
+    public OfflinePlayer getPlaceholderOfflinePlayer() {
+        return placeholderOfflinePlayer;
+    }
+
+    public void setSiItemCache(@NotNull Map<String, ItemStack> cache) {
+        this.siItemCache = cache;
+    }
+
+    public @Nullable ItemStack getSiItemFromCache(@NotNull String key) {
+        if (this.siItemCache == null) return null;
+        return this.siItemCache.get(key);
     }
 
     public @NotNull DeluxeMenus getPlugin() {

@@ -136,13 +136,22 @@ public class SkullUtils {
 
         final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
 
-        if (VersionHelper.HAS_PLAYER_PROFILES && offlinePlayer.getPlayerProfile().getTextures().isEmpty()) {
-            // updates the Player Profile and populates textures for offline players - for some reason this doesn't populate when getting the Profile first time
-            headMeta.setOwnerProfile(offlinePlayer.getPlayerProfile().update().join());
-        } else if (!VersionHelper.IS_SKULL_OWNER_LEGACY) {
-            headMeta.setOwningPlayer(offlinePlayer);
-        } else {
-            headMeta.setOwner(offlinePlayer.getName());
+        try {
+            if (VersionHelper.HAS_PLAYER_PROFILES && offlinePlayer.getPlayerProfile().getTextures().isEmpty()) {
+                // updates the Player Profile and populates textures for offline players - for some reason this doesn't populate when getting the Profile first time
+                headMeta.setOwnerProfile(offlinePlayer.getPlayerProfile().update().join());
+            } else if (!VersionHelper.IS_SKULL_OWNER_LEGACY) {
+                headMeta.setOwningPlayer(offlinePlayer);
+            } else {
+                headMeta.setOwner(offlinePlayer.getName());
+            }
+        } catch (final NoSuchMethodError | NoClassDefFoundError error) {
+            // Non-Paper servers (Arclight, etc.) may not fully implement Paper's PlayerProfile API
+            if (!VersionHelper.IS_SKULL_OWNER_LEGACY) {
+                headMeta.setOwningPlayer(offlinePlayer);
+            } else {
+                headMeta.setOwner(offlinePlayer.getName());
+            }
         }
 
         head.setItemMeta(headMeta);

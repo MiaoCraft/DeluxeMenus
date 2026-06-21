@@ -25,6 +25,8 @@ public final class NbtProvider {
     private static Method containsMethod;
     private static Method asNMSCopyMethod;
     private static Method asBukkitCopyMethod;
+    private static Method getCompoundMethod;
+    private static Method setCompoundMethod;
 
     private static Constructor<?> nbtCompoundConstructor;
 
@@ -54,6 +56,17 @@ public final class NbtProvider {
         } catch (NoSuchMethodException | ClassNotFoundException e) {
             NBT_HOOKED = false;
         }
+
+        // Path-aware NBT support (non-fatal; basic NBT still works if this fails)
+        try {
+            final Class<?> compoundClass = VersionHelper.getNMSClass("nbt", "NBTTagCompound");
+            final Class<?> nbtBaseClass = VersionHelper.getNMSClass("nbt", VersionConstants.NBT_BASE_CLASS_NAME);
+            getCompoundMethod = compoundClass.getMethod(VersionConstants.GET_COMPOUND_METHOD_NAME, String.class);
+            setCompoundMethod = compoundClass.getMethod(VersionConstants.SET_METHOD_NAME, String.class, nbtBaseClass);
+        } catch (NoSuchMethodException | ClassNotFoundException ignored) {
+            getCompoundMethod = null;
+            setCompoundMethod = null;
+        }
     }
 
     public static boolean isAvailable() {
@@ -75,7 +88,16 @@ public final class NbtProvider {
         Object nmsItemStack = asNMSCopy(itemStack);
         Object itemCompound = hasTag(nmsItemStack) ? getTag(nmsItemStack) : newNBTTagCompound();
 
-        setString(itemCompound, key, value);
+        final String[] segments = key.split("/");
+        if (segments.length > 1 && getCompoundMethod != null) {
+            final String[] parentPath = new String[segments.length - 1];
+            System.arraycopy(segments, 0, parentPath, 0, segments.length - 1);
+            final String leafKey = segments[segments.length - 1];
+            final Object targetCompound = getOrCreateCompound(itemCompound, parentPath);
+            setString(targetCompound, leafKey, value);
+        } else {
+            setString(itemCompound, key, value);
+        }
         setTag(nmsItemStack, itemCompound);
 
         return asBukkitCopy(nmsItemStack);
@@ -127,7 +149,16 @@ public final class NbtProvider {
         Object nmsItemStack = asNMSCopy(itemStack);
         Object itemCompound = hasTag(nmsItemStack) ? getTag(nmsItemStack) : newNBTTagCompound();
 
-        setByte(itemCompound, key, value);
+        final String[] segments = key.split("/");
+        if (segments.length > 1 && getCompoundMethod != null) {
+            final String[] parentPath = new String[segments.length - 1];
+            System.arraycopy(segments, 0, parentPath, 0, segments.length - 1);
+            final String leafKey = segments[segments.length - 1];
+            final Object targetCompound = getOrCreateCompound(itemCompound, parentPath);
+            setByte(targetCompound, leafKey, value);
+        } else {
+            setByte(itemCompound, key, value);
+        }
         setTag(nmsItemStack, itemCompound);
 
         return asBukkitCopy(nmsItemStack);
@@ -140,7 +171,16 @@ public final class NbtProvider {
         Object nmsItemStack = asNMSCopy(itemStack);
         Object itemCompound = hasTag(nmsItemStack) ? getTag(nmsItemStack) : newNBTTagCompound();
 
-        setShort(itemCompound, key, value);
+        final String[] segments = key.split("/");
+        if (segments.length > 1 && getCompoundMethod != null) {
+            final String[] parentPath = new String[segments.length - 1];
+            System.arraycopy(segments, 0, parentPath, 0, segments.length - 1);
+            final String leafKey = segments[segments.length - 1];
+            final Object targetCompound = getOrCreateCompound(itemCompound, parentPath);
+            setShort(targetCompound, leafKey, value);
+        } else {
+            setShort(itemCompound, key, value);
+        }
         setTag(nmsItemStack, itemCompound);
 
         return asBukkitCopy(nmsItemStack);
@@ -153,7 +193,16 @@ public final class NbtProvider {
         Object nmsItemStack = asNMSCopy(itemStack);
         Object itemCompound = hasTag(nmsItemStack) ? getTag(nmsItemStack) : newNBTTagCompound();
 
-        setInt(itemCompound, key, value);
+        final String[] segments = key.split("/");
+        if (segments.length > 1 && getCompoundMethod != null) {
+            final String[] parentPath = new String[segments.length - 1];
+            System.arraycopy(segments, 0, parentPath, 0, segments.length - 1);
+            final String leafKey = segments[segments.length - 1];
+            final Object targetCompound = getOrCreateCompound(itemCompound, parentPath);
+            setInt(targetCompound, leafKey, value);
+        } else {
+            setInt(itemCompound, key, value);
+        }
         setTag(nmsItemStack, itemCompound);
 
         return asBukkitCopy(nmsItemStack);
@@ -183,6 +232,61 @@ public final class NbtProvider {
         setTag(nmsItemStack, itemCompound);
 
         return asBukkitCopy(nmsItemStack);
+    }
+
+    /**
+     * Gets or creates nested NBTTagCompounds for the given path segments.
+     *
+     * @param rootCompound The root compound to start from.
+     * @param segments     The path segments (compound keys) to traverse.
+     * @return The innermost compound at the end of the path.
+     */
+    private static Object getOrCreateCompound(final Object rootCompound, final String[] segments) {
+        Object current = rootCompound;
+        for (final String segment : segments) {
+            if (segment.isEmpty()) continue;
+            if (hasKeyInCompound(current, segment)) {
+                current = getCompound(current, segment);
+            } else {
+                final Object newCompound = newNBTTagCompound();
+                setCompound(current, segment, newCompound);
+                current = newCompound;
+            }
+        }
+        return current;
+    }
+
+    /**
+     * Checks if a compound contains a given key.
+     */
+    private static boolean hasKeyInCompound(final Object compound, final String key) {
+        try {
+            return (boolean) containsMethod.invoke(compound, key);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Gets a sub-compound from a parent compound by key.
+     */
+    private static Object getCompound(final Object parentCompound, final String key) {
+        try {
+            return getCompoundMethod.invoke(parentCompound, key);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Sets a sub-compound on a parent compound.
+     */
+    private static void setCompound(final Object parentCompound, final String key, final Object childCompound) {
+        if (setCompoundMethod == null) return;
+        try {
+            setCompoundMethod.invoke(parentCompound, key, childCompound);
+        } catch (IllegalAccessException | InvocationTargetException ignored) {
+        }
     }
 
     /**
@@ -350,6 +454,9 @@ public final class NbtProvider {
         private final static String HAS_TAG_METHOD_NAME = hasTagMethodName();
         private final static String GET_TAG_METHOD_NAME = getTagMethodName();
         private final static String SET_TAG_METHOD_NAME = setTagMethodName();
+        private final static String NBT_BASE_CLASS_NAME = nbtBaseClassName();
+        private final static String GET_COMPOUND_METHOD_NAME = getCompoundMethodName();
+        private final static String SET_METHOD_NAME = setMethodName();
 
         private static String getStringMethodName() {
             if (VersionHelper.HAS_OBFUSCATED_NAMES) return "l";
@@ -410,6 +517,21 @@ public final class NbtProvider {
         private static String removeTagMethodName() {
             if (VersionHelper.HAS_OBFUSCATED_NAMES) return "r";
             return "remove";
+        }
+
+        private static String getCompoundMethodName() {
+            if (VersionHelper.HAS_OBFUSCATED_NAMES) return "p";
+            return "getCompound";
+        }
+
+        private static String setMethodName() {
+            if (VersionHelper.HAS_OBFUSCATED_NAMES) return "a";
+            return "set";
+        }
+
+        private static String nbtBaseClassName() {
+            if (VersionHelper.HAS_OBFUSCATED_NAMES) return "Tag";
+            return "NBTBase";
         }
 
     }

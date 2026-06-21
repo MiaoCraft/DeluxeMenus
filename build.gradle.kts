@@ -41,6 +41,7 @@ dependencies {
     compileOnly(libs.mmoitems)
     compileOnly(libs.score)
     compileOnly(libs.sig)
+    compileOnly(files("SX-Item-4.4.9-all.jar"))
 
     compileOnly(libs.papi)
 
@@ -61,8 +62,8 @@ tasks {
         archiveFileName.set("DeluxeMenus-${rootProject.version}.jar")
     }
     java {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         disableAutoTargetJvm()
     }
 

@@ -49,6 +49,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -149,6 +150,43 @@ public class DeluxeMenusConfig {
         } else {
             return Collections.singletonList(config.getString(path, ""));
         }
+    }
+
+    /**
+     * Gets a string value from config, handling cases where YAML interprets
+     * values like "player:1" as a map (sexagesimal number format) instead of a string.
+     * When {@link FileConfiguration#getString(String)} returns null but the path exists,
+     * this method attempts to reconstruct the original string from the config data.
+     *
+     * @param config the configuration
+     * @param path   the path to read
+     * @return the string value, or null if not present
+     */
+    private @Nullable String getConfigString(FileConfiguration config, String path) {
+        if (!config.contains(path)) {
+            return null;
+        }
+
+        String value = config.getString(path);
+        if (value != null) {
+            return value;
+        }
+
+        // YAML may have interpreted the value as a map (e.g. "%player_name%:1" becomes {%player_name%: 1})
+        // Try to reconstruct from configuration section by joining the first key-value pair
+        if (config.isConfigurationSection(path)) {
+            final ConfigurationSection section = config.getConfigurationSection(path);
+            if (section != null) {
+                for (String key : section.getKeys(false)) {
+                    Object obj = section.get(key);
+                    if (obj != null) {
+                        return key + ":" + obj;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public boolean loadDefConfig() {
@@ -566,6 +604,10 @@ public class DeluxeMenusConfig {
         builder.parsePlaceholdersAfterArguments(c.getBoolean(pre + "parse_placeholders_after_arguments", false));
         builder.enableBypassPerm(c.getBoolean(pre + "enable_open_requirements_bypass_permissions", false));
 
+        if (c.contains(pre + "target")) {
+            builder.target(c.getString(pre + "target"));
+        }
+
         // Don't need to register the menu since it's done in the constructor
         new Menu(plugin, builder.build(), items, path);
     }
@@ -640,7 +682,9 @@ public class DeluxeMenusConfig {
                     .enchantmentGlintOverride(c.getString(currentPath + "enchantment_glint_override", null))
                     .rarity(c.getString(currentPath + "rarity", null))
                     .tooltipStyle(c.getString(currentPath + "tooltip_style", null))
-                    .itemModel(c.getString(currentPath + "item_model", null));
+                    .itemModel(c.getString(currentPath + "item_model", null))
+                    .playerItem(getConfigString(c, currentPath + "player_item"))
+                    .siItem(c.getString(currentPath + "si_item"));
 
             if (c.contains(currentPath + "model_data_component") && c.isConfigurationSection(currentPath + "model_data_component")) {
                 final ConfigurationSection modelDataComponent = c.getConfigurationSection(currentPath + "model_data_component");

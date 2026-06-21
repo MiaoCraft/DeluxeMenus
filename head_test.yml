@@ -1,0 +1,62 @@
+# ============================================================
+# head_test.yml — 测试头颅按钮
+# 用法：放入 gui_menus/ 目录，/dm open head_test
+# ============================================================
+menu_title: '&8头颅测试菜单'
+open_command: head_test
+size: 27
+
+items:
+  # ── named head: 在线玩家头 ──
+  named_head:
+    material: 'head-%player_name%'
+    slot: 11
+    display_name: '&e%player_name% 的头颅'
+    skull_owner: "%player_name%"
+    lore:
+      - '&7material: head-%player_name%'
+      - '&7此头颅从玩家名获取'
+
+  # ── named head 带 target: 指定玩家 ──
+  named_head_target:
+    material: 'head-{target}'
+    slot: 12
+    display_name: '&e{target} 的头颅'
+    lore:
+      - '&7material: head-{target}'
+      - '&7用法: /head_test <玩家名>'
+
+  # ── texture head: 自定义纹理 ──
+  texture_head:
+    material: 'texture-93a728ad8d31486a7f9aad200edb373ea803d1fc5fd4321b2e2a971348234443'
+    slot: 14
+    display_name: '&d自定义纹理头颅'
+    lore:
+      - '&7texture- 前缀指定纹理URL'
+
+  # ── base64 head ──
+  base64_head:
+    material: 'basehead-eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTNhNzI4YWQ4ZDMxNDg2YTdmOWFhZDIwMGVkYjM3M2VhODAzZDFmYzVmZDQzMjFiMmUyYTk3MTM0ODIzNDQ0MyJ9fX0='
+    slot: 15
+    display_name: '&dBase64 纹理头颅'
+    lore:
+      - '&7basehead- 前缀指定base64纹理'
+
+  # ── hdb head ──
+  hdb_head:
+    material: 'hdb-8536'
+    slot: 13
+    display_name: '&cHeadDatabase 头颅'
+    lore:
+      - '&7hdb- 前缀指定HDB ID'
+      - '&7需要 HeadDatabase 插件'
+
+  # ── 关闭按钮 ──
+  close:
+    material: BARRIER
+    slot: 22
+    display_name: '&c关闭'
+
+args:
+  - 'target'
+arguments_support_placeholders: true

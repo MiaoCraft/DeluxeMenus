@@ -41,6 +41,7 @@ public final class Constants {
      */
     public static final Map<String, Function<PlayerInventory, ItemStack>> INVENTORY_ITEM_ACCESSORS = ImmutableMap.<String, Function<PlayerInventory, ItemStack>>builder()
             .put(MAIN_HAND, PlayerInventory::getItemInMainHand)
+            .put("hand", PlayerInventory::getItemInMainHand)
             .put(OFF_HAND, PlayerInventory::getItemInOffHand)
             .put(HELMET, PlayerInventory::getHelmet)
             .put(CHESTPLATE, PlayerInventory::getChestplate)

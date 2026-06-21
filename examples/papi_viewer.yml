@@ -1,0 +1,125 @@
+# ============================================================
+# menus/papi_viewer.yml
+#
+# 功能：查看目标玩家的 PAPI 变量数据（使用 target 功能）
+#       所有 %placeholder% 都会以 target 玩家的数据来解析
+# 用法：/pview                    ← 看自己的数据
+#       /pview <玩家名>           ← 看指定玩家的数据
+#       或 /dm open papi_viewer [玩家名]
+# 示例：/pview Notch
+# ============================================================
+menu_title: "&8玩家数据 - {target}"
+open_command: /pview
+size: 36
+target: "{target}"
+arguments_support_placeholders: true
+args:
+  - "target"
+update_interval: 20
+open_requirement:
+  requirements:
+    permission:
+      type: has permission
+      permission: deluxemenus.pview
+      deny_commands:
+        - '[message] &c你没有权限查看玩家数据！'
+
+items:
+  # ────────── 玩家基础信息 ──────────
+  player_head:
+    material: PLAYER_HEAD
+    slot: 10
+    display_name: "&e{target}"
+    lore:
+      - "&7━━━━━━━━━━━━━━━━━━"
+      - " &f血量: &a%player_health%&7/&a%player_max_health%"
+      - " &f饥饿值: &e%player_food_level%&7/&e20"
+      - " &f等级: &b%player_level%"
+      - " &f经验: &a%player_exp%&7/&a%player_exp_to_next%"
+      - " &f饱和度: &6%player_saturation%"
+      - " &f氧气值: &3%player_remaining_air%"
+      - " &7━━━━━━━━━━━━━━━━━━"
+    update: true
+
+  # ────────── 位置信息 ──────────
+  compass:
+    material: COMPASS
+    slot: 12
+    display_name: "&b{target} 的位置"
+    lore:
+      - "&7━━━━━━━━━━━━━━━━━━"
+      - " &f世界: &a%player_world%"
+      - " &fX: &e%player_x%"
+      - " &fY: &e%player_y%"
+      - " &fZ: &e%player_z%"
+      - " &f朝向: &d%player_facing%"
+      - " &f生物群系: &a%player_biome%"
+      - " &f亮度: &e%player_light_level%"
+      - " &7━━━━━━━━━━━━━━━━━━"
+    update: true
+
+  # ────────── 游戏统计 ──────────
+  book:
+    material: BOOK
+    slot: 14
+    display_name: "&d{target} 的游戏统计"
+    lore:
+      - "&7━━━━━━━━━━━━━━━━━━"
+      - " &f击杀数: &c%statistic_player_kills%"
+      - " &f死亡数: &7%statistic_deaths%"
+      - " &f跳跃次数: &a%statistic_jump%"
+      - " &f在线时间: &b%statistic_hours_played% 小时"
+      - " &f行走距离: &e%statistic_walk_one_cm% 格"
+      - " &7━━━━━━━━━━━━━━━━━━"
+    update: true
+
+  # ────────── 经济信息 ──────────
+  gold_ingot:
+    material: GOLD_INGOT
+    slot: 16
+    display_name: "&6{target} 的经济"
+    lore:
+      - "&7━━━━━━━━━━━━━━━━━━"
+      - " &f余额: &6%vault_eco_balance%"
+      - " &7━━━━━━━━━━━━━━━━━━"
+    update: true
+
+  # ────────── Ping & 连接 ──────────
+  redstone_torch:
+    material: REDSTONE_TORCH
+    slot: 21
+    display_name: "&c{target} 的连接"
+    lore:
+      - "&7━━━━━━━━━━━━━━━━━━"
+      - " &fPing: &e%player_ping%ms"
+      - " &f游戏模式: &b%player_gamemode%"
+      - " &7━━━━━━━━━━━━━━━━━━"
+    update: true
+
+  # ────────── 服务器信息 ──────────
+  clock:
+    material: CLOCK
+    slot: 23
+    display_name: "&e服务器信息"
+    lore:
+      - "&7━━━━━━━━━━━━━━━━━━"
+      - " &f在线玩家: &a%server_online%&7/&a%server_max_players%"
+      - " &fTPS: &e%server_tps_1%%"
+      - " &7━━━━━━━━━━━━━━━━━━"
+    update: true
+
+  # ────────── 功能按钮 ──────────
+  refresh:
+    material: SUNFLOWER
+    slot: 30
+    display_name: "&a自动刷新中"
+    lore:
+      - "&7此菜单每 20 秒自动更新数据"
+    update: true
+
+  close:
+    material: BARRIER
+    slot: 32
+    display_name: "&c关闭"
+    click_commands:
+      - "[close]"

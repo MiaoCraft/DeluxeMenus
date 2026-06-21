@@ -1,3 +1,5 @@
 rootProject.name = "DeluxeMenus"
 
+includeBuild("SX-Item")
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

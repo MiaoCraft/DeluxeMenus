@@ -22,10 +22,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import github.saukiya.sxitem.SXItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -296,6 +299,21 @@ public class Menu {
         holder.parsePlaceholdersInArguments(this.options.parsePlaceholdersInArguments());
         holder.parsePlaceholdersAfterArguments(this.options.parsePlaceholdersAfterArguments());
 
+        if (this.options.target().isPresent() && holder.getPlaceholderPlayer() == null) {
+            final String targetName = holder.setPlaceholdersAndArguments(this.options.target().get());
+            final Player targetPlayer = Bukkit.getPlayerExact(targetName);
+            if (targetPlayer != null) {
+                holder.setPlaceholderPlayer(targetPlayer);
+            } else {
+                // Target is offline — fallback to OfflinePlayer so PAPI can still resolve
+                // basic placeholders like %player_name% for the target
+                final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
+                if (offlinePlayer.hasPlayedBefore()) {
+                    holder.setPlaceholderOfflinePlayer(offlinePlayer);
+                }
+            }
+        }
+
         if (!this.handleArgRequirements(holder)) {
             return;
         }
@@ -303,6 +321,27 @@ public class Menu {
         if (!this.handleOpenRequirements(holder)) {
             return;
         }
+
+        // Pre-load SX-Item items on the main thread so they can be used in async
+        final java.util.Map<String, ItemStack> siItemCache = new java.util.HashMap<>();
+        for (Entry<Integer, TreeMap<Integer, MenuItem>> entry : items.entrySet()) {
+            for (MenuItem item : entry.getValue().values()) {
+                if (item.options().siItem().isPresent()) {
+                    try {
+                        final String siItemKey = holder.setPlaceholdersAndArguments(item.options().siItem().get());
+                        if (SXItem.getItemManager() != null) {
+                            final ItemStack siItemStack = SXItem.getItemManager().getItem(siItemKey, viewer);
+                            if (siItemStack != null && siItemStack.getType() != Material.AIR) {
+                                siItemCache.put(siItemKey, siItemStack);
+                            }
+                        }
+                    } catch (final NoClassDefFoundError ignored) {
+                        // SX-Item is not available
+                    }
+                }
+            }
+        }
+        holder.setSiItemCache(siItemCache);
 
         scheduler.runTaskAsynchronously(() -> {
 

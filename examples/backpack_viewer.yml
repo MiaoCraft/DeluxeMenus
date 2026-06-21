@@ -1,0 +1,276 @@
+# ============================================================
+# menus/backpack_viewer.yml
+#
+# 功能：查看指定玩家的背包物品（使用 player_item 功能）
+# 用法：/backpack <玩家名>
+#       或 /dm open backpack_viewer <玩家名>
+# 示例：/backpack Notch
+# ============================================================
+menu_title: "&8查看 {target} 的背包"
+open_command: /backpack
+size: 54
+args:
+  - "target"
+open_requirement:
+  requirements:
+    permission:
+      type: has permission
+      permission: deluxemenus.backpack
+      deny_commands:
+        - '[message] &c你没有权限使用此菜单！'
+
+items:
+  # ────────── 快捷栏 (slot 0-8) ──────────
+  hotbar_1:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 0
+    player_item: "{target}:0"
+    display_name: "&e{target} 快捷栏 1"
+    update: true
+  hotbar_2:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 1
+    player_item: "{target}:1"
+    display_name: "&e{target} 快捷栏 2"
+    update: true
+  hotbar_3:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 2
+    player_item: "{target}:2"
+    display_name: "&e{target} 快捷栏 3"
+    update: true
+  hotbar_4:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 3
+    player_item: "{target}:3"
+    display_name: "&e{target} 快捷栏 4"
+    update: true
+  hotbar_5:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 4
+    player_item: "{target}:4"
+    display_name: "&e{target} 快捷栏 5"
+    update: true
+  hotbar_6:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 5
+    player_item: "{target}:5"
+    display_name: "&e{target} 快捷栏 6"
+    update: true
+  hotbar_7:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 6
+    player_item: "{target}:6"
+    display_name: "&e{target} 快捷栏 7"
+    update: true
+  hotbar_8:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 7
+    player_item: "{target}:7"
+    display_name: "&e{target} 快捷栏 8"
+    update: true
+  hotbar_9:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 8
+    player_item: "{target}:8"
+    display_name: "&e{target} 快捷栏 9"
+    update: true
+
+  # ────────── 背包主体 (slot 9-17) ──────────
+  row2_1:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 9
+    player_item: "{target}:9"
+    update: true
+  row2_2:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 10
+    player_item: "{target}:10"
+    update: true
+  row2_3:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 11
+    player_item: "{target}:11"
+    update: true
+  row2_4:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 12
+    player_item: "{target}:12"
+    update: true
+  row2_5:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 13
+    player_item: "{target}:13"
+    update: true
+  row2_6:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 14
+    player_item: "{target}:14"
+    update: true
+  row2_7:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 15
+    player_item: "{target}:15"
+    update: true
+  row2_8:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 16
+    player_item: "{target}:16"
+    update: true
+  row2_9:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 17
+    player_item: "{target}:17"
+    update: true
+
+  # ────────── 背包主体 (slot 18-26) ──────────
+  row3_1:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 18
+    player_item: "{target}:18"
+    update: true
+  row3_2:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 19
+    player_item: "{target}:19"
+    update: true
+  row3_3:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 20
+    player_item: "{target}:20"
+    update: true
+  row3_4:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 21
+    player_item: "{target}:21"
+    update: true
+  row3_5:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 22
+    player_item: "{target}:22"
+    update: true
+  row3_6:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 23
+    player_item: "{target}:23"
+    update: true
+  row3_7:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 24
+    player_item: "{target}:24"
+    update: true
+  row3_8:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 25
+    player_item: "{target}:25"
+    update: true
+  row3_9:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 26
+    player_item: "{target}:26"
+    update: true
+
+  # ────────── 背包主体 (slot 27-35) ──────────
+  row4_1:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 27
+    player_item: "{target}:27"
+    update: true
+  row4_2:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 28
+    player_item: "{target}:28"
+    update: true
+  row4_3:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 29
+    player_item: "{target}:29"
+    update: true
+  row4_4:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 30
+    player_item: "{target}:30"
+    update: true
+  row4_5:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 31
+    player_item: "{target}:31"
+    update: true
+  row4_6:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 32
+    player_item: "{target}:32"
+    update: true
+  row4_7:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 33
+    player_item: "{target}:33"
+    update: true
+  row4_8:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 34
+    player_item: "{target}:34"
+    update: true
+  row4_9:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 35
+    player_item: "{target}:35"
+    update: true
+
+  # ────────── 装备栏 & 功能按钮 ──────────
+  separator:
+    material: BLACK_STAINED_GLASS_PANE
+    slot: 36
+    display_name: " "
+
+  helmet_slot:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 37
+    player_item: "{target}:39"
+    display_name: "&e{target} 的头盔"
+    update: true
+
+  chestplate_slot:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 38
+    player_item: "{target}:38"
+    display_name: "&e{target} 的胸甲"
+    update: true
+
+  leggings_slot:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 39
+    player_item: "{target}:37"
+    display_name: "&e{target} 的护腿"
+    update: true
+
+  boots_slot:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 40
+    player_item: "{target}:36"
+    display_name: "&e{target} 的靴子"
+    update: true
+
+  offhand_slot:
+    material: GRAY_STAINED_GLASS_PANE
+    slot: 41
+    player_item: "{target}:40"
+    display_name: "&e{target} 的副手"
+    update: true
+
+  refresh:
+    material: SUNFLOWER
+    slot: 49
+    display_name: "&a刷新"
+    lore:
+      - "&7点击刷新 {target} 的背包"
+    update: true
+    click_commands:
+      - "[refresh]"
+
+  close:
+    material: BARRIER
+    slot: 53
+    display_name: "&c关闭"
+    click_commands:
+      - "[close]"

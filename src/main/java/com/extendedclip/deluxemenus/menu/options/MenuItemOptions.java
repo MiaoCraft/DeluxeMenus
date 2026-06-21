@@ -43,6 +43,9 @@ public class MenuItemOptions {
     private final String tooltipStyle;
     private final String itemModel;
 
+    private final String playerItem;
+    private final String siItem;
+
     private final Map<Enchantment, Integer> enchantments;
     private final List<PotionEffect> potionEffects;
     private final List<Pattern> bannerMeta;
@@ -105,6 +108,8 @@ public class MenuItemOptions {
         this.rarity = builder.rarity;
         this.tooltipStyle = builder.tooltipStyle;
         this.itemModel = builder.itemModel;
+        this.playerItem = builder.playerItem;
+        this.siItem = builder.siItem;
         this.enchantments = builder.enchantments;
         this.potionEffects = builder.potionEffects;
         this.bannerMeta = builder.bannerMeta;
@@ -220,6 +225,14 @@ public class MenuItemOptions {
 
     public @NotNull Optional<String> itemModel() {
         return Optional.ofNullable(itemModel);
+    }
+
+    public @NotNull Optional<String> playerItem() {
+        return Optional.ofNullable(playerItem);
+    }
+
+    public @NotNull Optional<String> siItem() {
+        return Optional.ofNullable(siItem);
     }
 
     public @NotNull Map<Enchantment, Integer> enchantments() {
@@ -377,6 +390,8 @@ public class MenuItemOptions {
                 .rarity(this.rarity)
                 .tooltipStyle(this.tooltipStyle)
                 .itemModel(this.itemModel)
+                .playerItem(this.playerItem)
+                .siItem(this.siItem)
                 .enchantments(this.enchantments)
                 .potionEffects(this.potionEffects)
                 .bannerMeta(this.bannerMeta)
@@ -431,6 +446,9 @@ public class MenuItemOptions {
         private String rarity;
         private String tooltipStyle;
         private String itemModel;
+
+        private String playerItem;
+        private String siItem;
 
         private Map<Enchantment, Integer> enchantments = Collections.emptyMap();
         private List<PotionEffect> potionEffects = Collections.emptyList();
@@ -571,6 +589,16 @@ public class MenuItemOptions {
 
         public MenuItemOptionsBuilder itemModel(final @Nullable String itemModel) {
             this.itemModel = itemModel;
+            return this;
+        }
+
+        public MenuItemOptionsBuilder playerItem(final @Nullable String playerItem) {
+            this.playerItem = playerItem;
+            return this;
+        }
+
+        public MenuItemOptionsBuilder siItem(final @Nullable String siItem) {
+            this.siItem = siItem;
             return this;
         }
 
