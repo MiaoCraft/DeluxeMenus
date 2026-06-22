@@ -1,45 +1,33 @@
 package com.extendedclip.deluxemenus.menu;
 
 import com.extendedclip.deluxemenus.DeluxeMenus;
-import com.extendedclip.deluxemenus.events.DeluxeMenusOpenMenuEvent;
-import com.extendedclip.deluxemenus.events.DeluxeMenusPreOpenMenuEvent;
 import com.extendedclip.deluxemenus.menu.command.RegistrableMenuCommand;
 import com.extendedclip.deluxemenus.menu.options.MenuOptions;
 import com.extendedclip.deluxemenus.requirement.RequirementList;
-import com.extendedclip.deluxemenus.scheduler.scheduling.schedulers.TaskScheduler;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.StringUtils;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import github.saukiya.sxitem.SXItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class Menu {
 
-    private static final Map<String, Menu> menus = new ConcurrentHashMap<>();
-    private static final Set<MenuHolder> menuHolders = ConcurrentHashMap.newKeySet();
-    private static final Map<UUID, Menu> lastOpenedMenus = new ConcurrentHashMap<>();
+    private static final Map<String, Menu> menus = new HashMap<>();
+    private static final Set<MenuHolder> menuHolders = new HashSet<>();
+    private static final Map<UUID, Menu> lastOpenedMenus = new HashMap<>();
 
     private final DeluxeMenus plugin;
-    private final TaskScheduler scheduler;
     private final MenuOptions options;
     private final Map<Integer, TreeMap<Integer, MenuItem>> items;
     // menu path starting from the plugin directory
@@ -54,7 +42,6 @@ public class Menu {
             final @NotNull String path
     ) {
         this.plugin = plugin;
-        this.scheduler = plugin.getScheduler();
         this.options = options;
         this.items = items;
         this.path = path;
@@ -203,14 +190,13 @@ public class Menu {
         MenuHolder holder = optionalHolder.get();
 
         holder.stopPlaceholderUpdate();
-        holder.stopRefreshTask();
 
         if (executeCloseActions) {
             holder.getMenu().map(Menu::options).map(MenuOptions::closeHandler).flatMap(h -> h).ifPresent(h -> h.onClick(holder));
         }
 
         if (close) {
-            plugin.getScheduler().runTask(player, () -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 player.closeInventory();
                 cleanInventory(plugin, player);
             });
@@ -245,7 +231,7 @@ public class Menu {
             return true;
         }
 
-        if (holder.getViewer() != null && (this.options.enableBypassPerm() && this.hasOpenBypassPerm(holder.getViewer()))) {
+        if (holder.getViewer() != null && this.hasOpenBypassPerm(holder.getViewer())) {
             return true;
         }
 
@@ -284,13 +270,6 @@ public class Menu {
             return;
         }
 
-        DeluxeMenusPreOpenMenuEvent preOpenEvent = new DeluxeMenusPreOpenMenuEvent(viewer);
-        Bukkit.getPluginManager().callEvent(preOpenEvent);
-
-        if (preOpenEvent.isCancelled()) {
-            return;
-        }
-
         final MenuHolder holder = new MenuHolder(plugin, viewer);
         if (placeholderPlayer != null) {
             holder.setPlaceholderPlayer(placeholderPlayer);
@@ -305,8 +284,6 @@ public class Menu {
             if (targetPlayer != null) {
                 holder.setPlaceholderPlayer(targetPlayer);
             } else {
-                // Target is offline — fallback to OfflinePlayer so PAPI can still resolve
-                // basic placeholders like %player_name% for the target
                 final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetName);
                 if (offlinePlayer.hasPlayedBefore()) {
                     holder.setPlaceholderOfflinePlayer(offlinePlayer);
@@ -323,14 +300,14 @@ public class Menu {
         }
 
         // Pre-load SX-Item items on the main thread so they can be used in async
-        final java.util.Map<String, ItemStack> siItemCache = new java.util.HashMap<>();
+        final Map<String, ItemStack> siItemCache = new HashMap<>();
         for (Entry<Integer, TreeMap<Integer, MenuItem>> entry : items.entrySet()) {
             for (MenuItem item : entry.getValue().values()) {
                 if (item.options().siItem().isPresent()) {
                     try {
                         final String siItemKey = holder.setPlaceholdersAndArguments(item.options().siItem().get());
-                        if (SXItem.getItemManager() != null) {
-                            final ItemStack siItemStack = SXItem.getItemManager().getItem(siItemKey, viewer);
+                        if (github.saukiya.sxitem.SXItem.getItemManager() != null) {
+                            final ItemStack siItemStack = github.saukiya.sxitem.SXItem.getItemManager().getItem(siItemKey, viewer);
                             if (siItemStack != null && siItemStack.getType() != Material.AIR) {
                                 siItemCache.put(siItemKey, siItemStack);
                             }
@@ -343,7 +320,7 @@ public class Menu {
         }
         holder.setSiItemCache(siItemCache);
 
-        scheduler.runTaskAsynchronously(() -> {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 
             Set<MenuItem> activeItems = new HashSet<>();
 
@@ -432,11 +409,7 @@ public class Menu {
 
             final boolean updatePlaceholders = update;
 
-            scheduler.runTask(viewer, () -> {
-                if (options.refresh()) {
-                    holder.startRefreshTask();
-                }
-
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 if (isInMenu(holder.getViewer())) {
                     closeMenu(plugin, holder.getViewer(), false);
                 }
@@ -448,16 +421,7 @@ public class Menu {
                     holder.startUpdatePlaceholdersTask();
                 }
             });
-
-            scheduler.runTask(viewer, () -> {
-                DeluxeMenusOpenMenuEvent openEvent = new DeluxeMenusOpenMenuEvent(viewer, holder);
-                Bukkit.getPluginManager().callEvent(openEvent);
-            });
         });
-    }
-
-    public void refreshForAll() {
-        menuHolders.stream().filter(menuHolder -> menuHolder.getMenuName().equalsIgnoreCase(options.name())).forEach(MenuHolder::refreshMenu);
     }
 
     public @NotNull Map<Integer, TreeMap<Integer, MenuItem>> getMenuItems() {
@@ -475,9 +439,4 @@ public class Menu {
     public @NotNull String path() {
         return this.path;
     }
-
-    public int activeViewers() {
-        return (int) menuHolders.stream().filter(holder -> holder.getMenuName().equalsIgnoreCase(options.name())).count();
-    }
-
 }

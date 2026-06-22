@@ -51,10 +51,6 @@ public enum RequirementType {
       "Checks if a string contains another string", Arrays.asList("input", "output")),
   STRING_DOES_NOT_CONTAIN(Arrays.asList("!string contains", "!stringcontains", "!contains"),
       "Checks if a string does not contain another string", Arrays.asList("input", "output")),
-  STRING_CONTAINS_IGNORECASE(Arrays.asList("string contains ignorecase", "stringcontainsignorecase", "containsignorecase"),
-      "Checks if a string contains another string ignoring case", Arrays.asList("input", "output")),
-  STRING_DOES_NOT_CONTAIN_IGNORECASE(Arrays.asList("!string contains ignorecase", "!stringcontainsignorecase", "!containsignorecase"),
-      "Checks if a string does not contain another string ignoring case", Arrays.asList("input", "output")),
   STRING_EQUALS(Arrays.asList("string equals", "stringequals", "equals"),
       "Checks if a string equals another string", Arrays.asList("input", "output")),
   STRING_DOES_NOT_EQUAL(Arrays.asList("!string equals", "!stringequals", "!equals"),
@@ -126,4 +122,3 @@ public enum RequirementType {
     return configOptions;
   }
 }
-

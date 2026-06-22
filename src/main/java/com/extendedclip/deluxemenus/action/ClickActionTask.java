@@ -4,8 +4,6 @@ import com.extendedclip.deluxemenus.DeluxeMenus;
 import com.extendedclip.deluxemenus.menu.Menu;
 import com.extendedclip.deluxemenus.menu.MenuHolder;
 import com.extendedclip.deluxemenus.persistentmeta.PersistentMetaHandler;
-import com.extendedclip.deluxemenus.scheduler.UniversalRunnable;
-import com.extendedclip.deluxemenus.scheduler.scheduling.schedulers.TaskScheduler;
 import com.extendedclip.deluxemenus.utils.AdventureUtils;
 import com.extendedclip.deluxemenus.utils.DebugLevel;
 import com.extendedclip.deluxemenus.utils.ExpUtils;
@@ -16,6 +14,8 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -26,10 +26,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 
-public class ClickActionTask extends UniversalRunnable {
+public class ClickActionTask extends BukkitRunnable {
 
     private final DeluxeMenus plugin;
-    private final TaskScheduler scheduler;
     private final UUID uuid;
     private final ActionType actionType;
     private final String exec;
@@ -48,7 +47,6 @@ public class ClickActionTask extends UniversalRunnable {
             final boolean parsePlaceholdersAfterArguments
     ) {
         this.plugin = plugin;
-        this.scheduler = plugin.getScheduler();
         this.uuid = uuid;
         this.actionType = actionType;
         this.exec = exec;
@@ -68,6 +66,7 @@ public class ClickActionTask extends UniversalRunnable {
         final Player target = holder.isPresent() && holder.get().getPlaceholderPlayer() != null
                 ? holder.get().getPlaceholderPlayer()
                 : player;
+
 
         final String executable = StringUtils.replacePlaceholdersAndArguments(
                 this.exec,
@@ -117,7 +116,7 @@ public class ClickActionTask extends UniversalRunnable {
                 break;
 
             case CONSOLE:
-                scheduler.runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable));
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), executable);
                 break;
 
             case MINI_MESSAGE:
@@ -130,34 +129,6 @@ public class ClickActionTask extends UniversalRunnable {
 
             case MESSAGE:
                 player.sendMessage(StringUtils.color(executable));
-                break;
-
-            case LOG:
-                final String[] logParts = executable.split(" ", 2);
-
-                if (logParts.length == 0 || logParts[0].isBlank()) {
-                    plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "LOG command requires at least a message");
-                    break;
-                }
-
-                Level logLevel;
-                String message;
-
-                if (logParts.length == 1) {
-                    logLevel = Level.INFO;
-                    message = logParts[0];
-                } else {
-                    message = logParts[1];
-
-                    try {
-                        logLevel = Level.parse(logParts[0].toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        logLevel = Level.INFO;
-                        plugin.debug(DebugLevel.HIGHEST, Level.WARNING, "Log level " + logParts[0] + " is not a valid log level! Using INFO instead.");
-                    }
-                }
-
-                plugin.getLogger().log(logLevel, String.format("[%s]: %s", holder.map(MenuHolder::getMenuName).orElse("Unknown Menu"), message));
                 break;
 
             case BROADCAST:
@@ -390,44 +361,33 @@ public class ClickActionTask extends UniversalRunnable {
                 break;
 
             case BROADCAST_SOUND:
-            case BROADCAST_RAW_SOUND:
             case BROADCAST_WORLD_SOUND:
-            case BROADCAST_WORLD_RAW_SOUND:
-            case PLAY_RAW_SOUND:
             case PLAY_SOUND:
-                boolean isRaw = isRaw(actionType);
-
-                Sound sound = null;
-                String soundName = executable;
+                final Sound sound;
                 float volume = 1;
                 float pitch = 1;
 
                 if (!executable.contains(" ")) {
-                    if (!isRaw) {
-                        try {
-                            sound = SoundUtils.getSound(executable.toUpperCase());
-                        } catch (final IllegalArgumentException exception) {
-                            plugin.printStacktrace(
-                                    "Sound name given for sound action: " + executable + ", is not a valid sound!",
-                                    exception
-                            );
-                            break;
-                        }
+                    try {
+                        sound = SoundUtils.getSound(executable.toUpperCase());
+                    } catch (final IllegalArgumentException exception) {
+                        plugin.printStacktrace(
+                                "Sound name given for sound action: " + executable + ", is not a valid sound!",
+                                exception
+                        );
+                        break;
                     }
                 } else {
                     String[] parts = executable.split(" ", 3);
-                    soundName = parts[0];
 
-                    if (!isRaw) {
-                        try {
-                            sound = SoundUtils.getSound(parts[0].toUpperCase());
-                        } catch (final IllegalArgumentException exception) {
-                            plugin.printStacktrace(
-                                    "Sound name given for sound action: " + parts[0] + ", is not a valid sound!",
-                                    exception
-                            );
-                            break;
-                        }
+                    try {
+                        sound = SoundUtils.getSound(parts[0].toUpperCase());
+                    } catch (final IllegalArgumentException exception) {
+                        plugin.printStacktrace(
+                                "Sound name given for sound action: " + parts[0] + ", is not a valid sound!",
+                                exception
+                        );
+                        break;
                     }
 
                     if (parts.length == 3) {
@@ -447,6 +407,7 @@ public class ClickActionTask extends UniversalRunnable {
                         }
                     }
 
+
                     try {
                         volume = Float.parseFloat(parts[1]);
                     } catch (final NumberFormatException exception) {
@@ -464,70 +425,26 @@ public class ClickActionTask extends UniversalRunnable {
                 }
 
                 switch (actionType) {
-                    case BROADCAST_WORLD_RAW_SOUND:
-                        for (final Player broadcastTarget : player.getWorld().getPlayers()) {
-                            broadcastTarget.playSound(broadcastTarget.getLocation(), soundName, volume, pitch);
-                        }
-                        break;
-
-                    case BROADCAST_RAW_SOUND:
-                        for (final Player broadcastTarget : Bukkit.getOnlinePlayers()) {
-                            broadcastTarget.playSound(broadcastTarget.getLocation(), soundName, volume, pitch);
-                        }
-                        break;
-
-                    case PLAY_RAW_SOUND:
-                        player.playSound(player.getLocation(), soundName, volume, pitch);
-                        break;
-
                     case BROADCAST_SOUND:
-                        if (sound == null) {
-                            plugin.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "Sound name given for sound action: " + executable + ", is not a valid sound!"
-                            );
-                            break;
-                        }
                         for (final Player broadcastTarget : Bukkit.getOnlinePlayers()) {
                             broadcastTarget.playSound(broadcastTarget.getLocation(), sound, volume, pitch);
                         }
                         break;
 
                     case BROADCAST_WORLD_SOUND:
-                        if (sound == null) {
-                            plugin.debug(
-                                    DebugLevel.HIGHEST,
-                                    Level.WARNING,
-                                    "Sound name given for sound action: " + executable + ", is not a valid sound!"
-                            );
-                            break;
-                        }
                         for (final Player broadcastTarget : player.getWorld().getPlayers()) {
                             broadcastTarget.playSound(broadcastTarget.getLocation(), sound, volume, pitch);
                         }
                         break;
 
-                        case PLAY_SOUND: 
-                            if (sound == null) {
-                                plugin.debug(
-                                      DebugLevel.HIGHEST, 
-                                      Level.WARNING,
-                                      "Sound name given for sound action: " + executable + ", is not a valid sound!"
-                                );
-                                break;
-                            }
-                            player.playSound(player.getLocation(), sound, volume, pitch);
-                            break;
+                    case PLAY_SOUND:
+                        player.playSound(player.getLocation(), sound, volume, pitch);
+                        break;
                 }
                 break;
 
             default:
                 break;
         }
-    }
-
-    private boolean isRaw(ActionType actionType) {
-        return actionType == ActionType.PLAY_RAW_SOUND || actionType == ActionType.BROADCAST_RAW_SOUND || actionType == ActionType.BROADCAST_WORLD_RAW_SOUND;
     }
 }

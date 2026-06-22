@@ -16,11 +16,8 @@ public class MenuOptions {
     private final InventoryType type;
     private final int size;
     private final int updateInterval;
-    private final int refreshInterval;
-    private final boolean refresh;
     private final boolean parsePlaceholdersInArguments;
     private final boolean parsePlaceholdersAfterArguments;
-    private final boolean enableBypassPerm;
 
     private final String target;
 
@@ -40,11 +37,8 @@ public class MenuOptions {
         this.type = builder.type;
         this.size = builder.size;
         this.updateInterval = builder.updateInterval;
-        this.refreshInterval = builder.refreshInterval;
-        this.refresh = builder.refresh;
         this.parsePlaceholdersInArguments = builder.parsePlaceholdersInArguments;
         this.parsePlaceholdersAfterArguments = builder.parsePlaceholdersAfterArguments;
-        this.enableBypassPerm = builder.enableBypassPerm;
 
         this.target = builder.target;
 
@@ -83,24 +77,12 @@ public class MenuOptions {
         return this.updateInterval;
     }
 
-    public int refreshInterval() {
-        return this.refreshInterval;
-    }
-
-    public boolean refresh() {
-        return this.refresh;
-    }
-
     public boolean parsePlaceholdersInArguments() {
         return this.parsePlaceholdersInArguments;
     }
 
     public boolean parsePlaceholdersAfterArguments() {
         return this.parsePlaceholdersAfterArguments;
-    }
-
-    public boolean enableBypassPerm() {
-        return this.enableBypassPerm;
     }
 
     public @NotNull Optional<String> target() {
@@ -144,11 +126,8 @@ public class MenuOptions {
                 .type(this.type)
                 .size(this.size)
                 .updateInterval(this.updateInterval)
-                .refreshInterval(this.refreshInterval)
-                .refresh(this.refresh)
                 .parsePlaceholdersInArguments(this.parsePlaceholdersInArguments)
                 .parsePlaceholdersAfterArguments(this.parsePlaceholdersAfterArguments)
-                .enableBypassPerm(this.enableBypassPerm)
                 .target(this.target)
                 .commands(this.commands)
                 .registerCommands(this.registerCommands)
@@ -167,11 +146,8 @@ public class MenuOptions {
         private InventoryType type = InventoryType.CHEST;
         private int size = 9;
         private int updateInterval = 10;
-        private int refreshInterval = 10;
-        private boolean refresh;
         private boolean parsePlaceholdersInArguments = false;
         private boolean parsePlaceholdersAfterArguments = false;
-        private boolean enableBypassPerm = false;
 
         private String target;
 
@@ -215,16 +191,6 @@ public class MenuOptions {
             return this;
         }
 
-        public MenuOptionsBuilder refreshInterval(final int refreshInterval) {
-            this.refreshInterval = refreshInterval;
-            return this;
-        }
-
-        public MenuOptionsBuilder refresh(final boolean refresh) {
-            this.refresh = refresh;
-            return this;
-        }
-
         public MenuOptionsBuilder parsePlaceholdersInArguments(final boolean parsePlaceholdersInArguments) {
             this.parsePlaceholdersInArguments = parsePlaceholdersInArguments;
             return this;
@@ -232,11 +198,6 @@ public class MenuOptions {
 
         public MenuOptionsBuilder parsePlaceholdersAfterArguments(final boolean parsePlaceholdersAfterArguments) {
             this.parsePlaceholdersAfterArguments = parsePlaceholdersAfterArguments;
-            return this;
-        }
-
-        public MenuOptionsBuilder enableBypassPerm(final boolean enableBypassPerm) {
-            this.enableBypassPerm = enableBypassPerm;
             return this;
         }
 
